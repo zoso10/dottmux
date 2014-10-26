@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 NOW_PLAYING=$(osascript <<EOF
-tell application "Spotify" to set spotify_state to (player state as text)
-tell application "iTunes" to set itunes_state to (player state as text)
+set spotify_state to false
+set itunes_state to false
+
+if is_app_running("Spotify") then
+  tell application "Spotify" to set spotify_state to (player state as text)
+end if
+if is_app_running("iTunes") then
+  tell application "iTunes" to set itunes_state to (player state as text)
+end if
 (* Whatever other music applications you use *)
 
 if spotify_state is equal to "playing" then
@@ -17,8 +24,12 @@ else if itunes_state is equal to "playing" then
     return track_name & " - #[bold]" & artist_name & "#[nobold]"
   end tell
 else
-  return "Nothing playing"
+  return "Nothing playing :("
 end if
+
+on is_app_running(app_name)
+  tell application "System Events" to (name of processes) contains app_name
+end is_app_running
 EOF)
 
 echo $NOW_PLAYING
