@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-NOW_PLAYING=$(osascript <<EOF
+MAC_NOW_PLAYING=$(osascript <<EOF
 set spotify_state to false
 set itunes_state to false
 
@@ -32,4 +32,25 @@ on is_app_running(app_name)
 end is_app_running
 EOF)
 
-echo $NOW_PLAYING
+LINUX_NOW_PLAYING=$(ruby -e '
+require "dbus"
+
+bus = DBus.session_bus
+service = bus["org.mpris.MediaPlayer2.spotify"]
+object = service["/org/mpris/MediaPlayer2"]
+interface = object["org.mpris.MediaPlayer2.Player"]
+status = interface["PlaybackStatus"]
+song = interface["Metadata"]["xesam:title"]
+artist = interface["Metadata"]["xesam:artist"].first
+if status == "Playing"
+  puts "#{song} - #[bold]#{artist}#[nobold]"
+else
+  puts "Nothing playing :("
+end
+')
+
+if [[ $IS_MAC ]]; then
+  echo $MAC_NOW_PLAYING
+else
+  echo $LINUX_NOW_PLAYING
+fi
