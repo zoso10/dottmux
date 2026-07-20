@@ -33,10 +33,10 @@ set -g status-interval 5
 
 # Theming
 set -g status-style "bg=#103640"
-# Set 12-hour clock
-set-window-option -g clock-mode-style 12
+# Set 24-hour clock
+set-window-option -g clock-mode-style 24
 set -g status-right-length 150
-set -g status-right "#(~/.tmux/current_track.sh) #[fg=red]::#[fg=brightblue] #[bold]%d#[nobold] %b #[fg=red]::#[fg=brightblue]%l.%M %p "
+set -g status-right "#(~/.tmux/current_track.sh) #[fg=red]::#[fg=brightblue] #[bold]%d#[nobold] %b #[fg=red]::#[fg=brightblue]%k.%M "
 set-option -g pane-border-style fg=brightblue
 set-option -g pane-active-border-style fg=red
 
