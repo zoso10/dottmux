@@ -46,3 +46,5 @@ set-option -g pane-active-border-style fg=red
 
 # bindings for toggling pane sync
 bind -n C-s setw synchronize-panes
+
+set -g focus-events on
