@@ -1,0 +1,3 @@
+# Scripts from scripts/ that status.sh is allowed to run, one filename per line.
+current_track.sh
+claude_input.sh

@@ -36,7 +36,11 @@ set -g status-style "bg=#103640"
 # Set 24-hour clock
 set-window-option -g clock-mode-style 24
 set -g status-right-length 150
-set -g status-right "#(~/.tmux/current_track.sh) #[fg=red]::#[fg=brightblue] #[bold]%d#[nobold] %b #[fg=red]::#[fg=brightblue]%k.%M "
+# The first segment is a script from ~/.tmux/scripts that is listed in
+# ~/.tmux/approved_scripts. Pick a different one with
+#   TMUX_STATUS_SCRIPT=claude_input tmux                (when starting the server)
+#   tmux setenv -g TMUX_STATUS_SCRIPT claude_input      (while it is running)
+set -g status-right "#(~/.tmux/status.sh current_track) #[fg=red]::#[fg=brightblue] #[bold]%d#[nobold] %b #[fg=red]:: #[fg=brightblue]%k.%M "
 set-option -g pane-border-style fg=brightblue
 set-option -g pane-active-border-style fg=red
 
