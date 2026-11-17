@@ -40,14 +40,19 @@ set -g status-right-length 150
 # ~/.tmux/approved_scripts. Pick a different one with
 #   TMUX_STATUS_SCRIPT=claude_input tmux                (when starting the server)
 #   tmux setenv -g TMUX_STATUS_SCRIPT claude_input      (while it is running)
-set -g status-right "#(~/.tmux/status.sh claude_input) #[fg=red]::#[fg=brightblue] #[bold]%d#[nobold] %b #[fg=red]:: #[fg=brightblue]%k.%M "
+set -g status-right "#(~/.tmux/status.sh current_track) #[fg=red]::#[fg=brightblue] #[bold]%d#[nobold] %b #[fg=red]:: #[fg=brightblue]%k.%M "
 # Window tabs show Claude state from claude_hook.sh: red when a Claude in the
-# window is blocked on you, yellow when one finished and you haven't looked.
-# Switching to a window marks it seen.
-set -g window-status-format "#{?#{P:#{?#{==:#{@claude_waiting},input},1,}},#[fg=red]#[bold],#{?#{P:#{?#{==:#{@claude_waiting},done},1,}},#[fg=yellow],}}#I:#W#{?window_flags,#{window_flags}, }#[default]"
-set -g window-status-current-format "#{?#{P:#{?#{==:#{@claude_waiting},input},1,}},#[fg=red]#[bold],}#I:#W#{?window_flags,#{window_flags}, }#[default]"
+# window is blocked on you, yellow when one finished and you haven't looked,
+# and a … after the name while one is working, each followed by how long it has
+# been in that state. Switching to a window marks it seen.
+# @claude_age is the time since a pane's @claude_since, e.g. " 42s", " 12m", " 2h"
+set -g @claude_age "#{?@claude_since, #{?#{e|<:#{e|-:%s,#{@claude_since}},60},#{e|-:%s,#{@claude_since}}s,#{?#{e|<:#{e|-:%s,#{@claude_since}},3600},#{e|/:#{e|-:%s,#{@claude_since}},60}m,#{e|/:#{e|-:%s,#{@claude_since}},3600}h}},}"
+set -g window-status-format "#{?#{P:#{?#{==:#{@claude_waiting},input},1,}},#[fg=red]#[bold],#{?#{P:#{?#{==:#{@claude_waiting},done},1,}},#[fg=yellow],}}#I:#W#{?#{P:#{?#{==:#{@claude_waiting},working},1,}},…,}#{P:#{T:@claude_age}}#{?window_flags,#{window_flags}, }#[default]"
+set -g window-status-current-format "#{?#{P:#{?#{==:#{@claude_waiting},input},1,}},#[fg=red]#[bold],}#I:#W#{?#{P:#{?#{==:#{@claude_waiting},working},1,}},…,}#{P:#{T:@claude_age}}#{?window_flags,#{window_flags}, }#[default]"
 set-hook -g session-window-changed "run-shell -b \"~/.tmux/claude_hook.sh seen '#{window_id}'\""
 set-hook -g client-session-changed "run-shell -b \"~/.tmux/claude_hook.sh seen '#{window_id}'\""
+# prefix u marks the current pane unread, so its tab goes yellow once you leave
+bind u run-shell -b "~/.tmux/claude_hook.sh unread '#{pane_id}'"
 set-option -g pane-border-style fg=brightblue
 set-option -g pane-active-border-style fg=red
 

@@ -39,16 +39,35 @@ To change the default, edit the argument to `status.sh` in `tmuxconf`.
 3. Select it by filename, with or without the extension.
 
 ### claude_input
-Claude Code reports its state through hooks that call `claude_hook.sh`, which
-sets a `@claude_waiting` option on the tmux pane Claude is running in. Windows
-blocked on a question or permission prompt show in red, windows where Claude
-finished its turn show plain.
+Lists every window, across all sessions, where a Claude Code is waiting on
+you, with how long it has been waiting (`1:api 12m`). Blocked windows show in
+red. It reads the same pane state as the window tabs below, so it needs the
+same hooks; the tabs already show all of this per window, so it is mostly
+useful for spotting Claudes in other sessions.
 
-The window tabs use the same state: red when a Claude in the window is blocked
-on you, yellow when one finished and you haven't looked. Switching to a window
-marks it seen, and a Claude that finishes in the window you're already on
-doesn't mark it at all. These work without `claude_input` being the status
-script.
+## Claude Code window tabs
+Claude Code reports its state through hooks that call `claude_hook.sh`, which
+sets a `@claude_waiting` option on the tmux pane Claude is running in, and
+`@claude_since` to when it entered that state.
+
+The window tabs show that state: red when a Claude in the window is blocked on
+you, yellow when one finished and you haven't looked, and a `…` after the name
+while one is working, followed by how long it has been that way
+(`1:api… 4m`). Switching to a window marks it seen, and a Claude that finishes
+in the window you're already on doesn't mark it at all.
+
+`prefix u` marks the current pane unread again, so its tab goes yellow once you
+switch away. The timer picks up from when Claude finished rather than
+restarting; if Claude hasn't finished since your last prompt, or the pane
+isn't running Claude, it starts from now. It does nothing while Claude is
+working or blocked.
+
+Claude Code doesn't fire `Stop` when you interrupt a turn, so the `idle_prompt`
+hook clears a leftover `…` once Claude has sat at the prompt for about a
+minute.
+
+Use the same hooks in any other Claude config directory you run, e.g. one set
+with `CLAUDE_CONFIG_DIR`.
 
 Add the hooks to `~/.claude/settings.json`
 ```json
@@ -58,6 +77,10 @@ Add the hooks to `~/.claude/settings.json`
       {
         "matcher": "permission_prompt|elicitation_dialog",
         "hooks": [{ "type": "command", "command": "~/.tmux/claude_hook.sh input", "async": true }]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [{ "type": "command", "command": "~/.tmux/claude_hook.sh idle", "async": true }]
       }
     ],
     "PreToolUse": [
@@ -76,7 +99,7 @@ Add the hooks to `~/.claude/settings.json`
       { "hooks": [{ "type": "command", "command": "~/.tmux/claude_hook.sh done", "async": true }] }
     ],
     "UserPromptSubmit": [
-      { "hooks": [{ "type": "command", "command": "~/.tmux/claude_hook.sh clear", "async": true }] }
+      { "hooks": [{ "type": "command", "command": "~/.tmux/claude_hook.sh working", "async": true }] }
     ],
     "SessionStart": [
       { "hooks": [{ "type": "command", "command": "~/.tmux/claude_hook.sh clear", "async": true }] }
