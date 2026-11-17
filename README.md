@@ -44,6 +44,12 @@ sets a `@claude_waiting` option on the tmux pane Claude is running in. Windows
 blocked on a question or permission prompt show in red, windows where Claude
 finished its turn show plain.
 
+The window tabs use the same state: red when a Claude in the window is blocked
+on you, yellow when one finished and you haven't looked. Switching to a window
+marks it seen, and a Claude that finishes in the window you're already on
+doesn't mark it at all. These work without `claude_input` being the status
+script.
+
 Add the hooks to `~/.claude/settings.json`
 ```json
 {
@@ -81,3 +87,24 @@ Add the hooks to `~/.claude/settings.json`
   }
 }
 ```
+
+## Tasks
+`task.sh` gives each task its own git worktree and tmux window running
+`claude`. Keep the editor and app server in one window on the main checkout;
+tasks share that server.
+
+| Key | Does |
+|-----|------|
+| `prefix N` | Prompts for a branch, creates `<repo>/.claude/worktrees/<branch>`, opens a window named after the branch's last segment and starts `claude` |
+| `prefix X` | Removes the worktree the current pane is in and closes the windows that live entirely inside it. The branch is kept |
+
+Both work from anywhere in the repo, or from the shell
+```shell
+~/.tmux/task.sh new feature/kai-1234 [--from <ref>]
+~/.tmux/task.sh done [--force]
+```
+`new` checks out an existing local or `origin` branch, otherwise branches from
+the main checkout's `HEAD`. Running it for a worktree that already exists just
+opens a window there. `done` refuses when there are uncommitted changes or
+commits that aren't on a remote or the main checkout's branch; `--force`
+removes the worktree anyway.

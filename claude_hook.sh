@@ -5,25 +5,45 @@
 # disappears with the pane.
 #
 #   usage: claude_hook.sh <input|done|resume|clear>
+#          claude_hook.sh seen <window>
 #
 #   input   blocked on a question or permission prompt
-#   done    finished its turn
+#   done    finished its turn and you haven't looked yet; skipped when the
+#           window is already on screen
 #   resume  working again after a prompt, clears input but leaves done alone
 #   clear   not waiting
-
-[[ -n "$TMUX_PANE" ]] || exit 0
+#   seen    clears done on every pane in <window>; tmux calls this when you
+#           switch to a window
 
 {
   case "$1" in
-    input | done)
-      tmux set-option -p -t "$TMUX_PANE" @claude_waiting "$1"
+    seen)
+      [[ -n "$2" ]] || exit 0
+      tmux list-panes -t "$2" -F $'#{pane_id}\t#{@claude_waiting}' |
+        while IFS=$'\t' read -r pane state; do
+          [[ "$state" == "done" ]] && tmux set-option -p -u -t "$pane" @claude_waiting
+        done
+      ;;
+    input)
+      [[ -n "$TMUX_PANE" ]] || exit 0
+      tmux set-option -p -t "$TMUX_PANE" @claude_waiting input
+      ;;
+    done)
+      [[ -n "$TMUX_PANE" ]] || exit 0
+      if [[ "$(tmux display-message -p -t "$TMUX_PANE" '#{&&:#{window_active},#{session_attached}}')" == 1 ]]; then
+        tmux set-option -p -u -t "$TMUX_PANE" @claude_waiting
+      else
+        tmux set-option -p -t "$TMUX_PANE" @claude_waiting done
+      fi
       ;;
     resume)
+      [[ -n "$TMUX_PANE" ]] || exit 0
       if [[ "$(tmux show-options -pqv -t "$TMUX_PANE" @claude_waiting)" == "input" ]]; then
         tmux set-option -p -u -t "$TMUX_PANE" @claude_waiting
       fi
       ;;
     clear)
+      [[ -n "$TMUX_PANE" ]] || exit 0
       tmux set-option -p -u -t "$TMUX_PANE" @claude_waiting
       ;;
   esac
