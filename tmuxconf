@@ -40,7 +40,9 @@ set -g status-right-length 150
 # ~/.tmux/approved_scripts. Pick a different one with
 #   TMUX_STATUS_SCRIPT=claude_input tmux                (when starting the server)
 #   tmux setenv -g TMUX_STATUS_SCRIPT claude_input      (while it is running)
-set -g status-right "#(~/.tmux/status.sh current_track) #[fg=red]::#[fg=brightblue] #[bold]%d#[nobold] %b #[fg=red]:: #[fg=brightblue]%k.%M "
+# The session's tags from session_tags (see session_tags.sh), in their colours,
+# come first.
+set -g status-right "#{?@tags,#[bold]#{@tags}#[default] #[fg=red]::#[default] ,}#(~/.tmux/status.sh current_track) #[fg=red]::#[fg=brightblue] #[bold]%d#[nobold] %b #[fg=red]:: #[fg=brightblue]%k.%M "
 # Window tabs show Claude state from claude_hook.sh: red when a Claude in the
 # window is blocked on you, yellow when one finished and you haven't looked,
 # and a … after the name while one is working, each followed by how long it has
@@ -53,6 +55,22 @@ set-hook -g session-window-changed "run-shell -b \"~/.tmux/claude_hook.sh seen '
 set-hook -g client-session-changed "run-shell -b \"~/.tmux/claude_hook.sh seen '#{window_id}'\""
 # prefix u marks the current pane unread, so its tab goes yellow once you leave
 bind u run-shell -b "~/.tmux/claude_hook.sh unread '#{pane_id}'"
+# tag sessions from session_tags whenever they are created or renamed
+set-hook -g session-created "run-shell -b '~/.tmux/session_tags.sh'"
+set-hook -g session-renamed "run-shell -b '~/.tmux/session_tags.sh'"
+run-shell -b '~/.tmux/session_tags.sh'
+# the session/window picker, with each session's tags before its window count.
+# Otherwise tmux's default format.
+set -g @tree_format '#{?pane_format,#{?pane_marked,#[reverse],}#{pane_current_command}#{?pane_active,*,}#{?pane_marked,M,}#{?#{&&:#{pane_title},#{!=:#{pane_title},#{host_short}}},: "#{pane_title}",},#{?window_format,#{?window_marked_flag,#[reverse],}#{window_name}#{window_flags}#{?#{&&:#{==:#{window_panes},1},#{&&:#{pane_title},#{!=:#{pane_title},#{host_short}}}},: "#{pane_title}",},#{?@tags,#[bold]#{@tags}#[default] ,}#{session_windows} windows#{?session_grouped, (group #{session_group}: #{session_group_list}),}#{?session_attached, (attached),}}}'
+bind S choose-tree -Zs -F "#{E:@tree_format}"
+bind w choose-tree -Zw -F "#{E:@tree_format}"
+# prefix s: sessions grouped by tag in an fzf popup (see session_picker.sh),
+# or the picker above when fzf isn't installed
+bind s if-shell "command -v fzf > /dev/null" {
+  run-shell -b "~/.tmux/session_picker.sh '#{client_name}'"
+} {
+  choose-tree -Zs -F "#{E:@tree_format}"
+}
 set-option -g pane-border-style fg=brightblue
 set-option -g pane-active-border-style fg=red
 

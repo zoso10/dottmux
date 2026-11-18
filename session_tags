@@ -1,0 +1,12 @@
+# Tags for tmux sessions, shown on the right of the status bar.
+#
+#   <tag> [colour]: <session name> <session name> ...
+#
+# The colour is any tmux colour, e.g. #268bd2, green or colour208; without one
+# the tag uses the status bar's default colour.
+#
+# Session names may be globs (DW-*) and match case-insensitively. A session
+# listed under more than one tag gets all of them. Edits apply on the next
+# config reload (prefix r) or when a session is created or renamed.
+KaiPod #268bd2: KaiPod KP-* kairos drachma dployd
+Ductwork #b58900: DW-* OSS Pro website docs cloud

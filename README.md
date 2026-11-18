@@ -45,6 +45,39 @@ red. It reads the same pane state as the window tabs below, so it needs the
 same hooks; the tabs already show all of this per window, so it is mostly
 useful for spotting Claudes in other sessions.
 
+## Session tags
+The right of the status bar starts with the current session's tags, e.g. which
+organization it belongs to, each in its own colour. List them in
+`session_tags`, one tag per line with an optional colour, followed by the
+session names it covers
+```
+KaiPod #268bd2: kairos drachma dployd
+Ductwork #b58900: DW-* OSS Pro website docs
+```
+The colour is any tmux colour (`#268bd2`, `green`, `colour208`); hex colours
+look the same whatever your terminal theme.
+Names may be globs and match case-insensitively; a session under several tags
+shows them all. `session_tags.sh` stores them in each session's `@tags` option
+when the config loads and whenever a session is created or renamed, so after
+editing the file, reload with `prefix r`. To tag one session by hand until the
+next of those, run `tmux set @tags '#[fg=green]Whatever'`.
+
+## Session picker
+`prefix s` opens `session_picker.sh` in a popup: sessions grouped by tag, in
+the order the tags appear in `session_tags` with untagged sessions last, each
+followed by its windows. Windows are coloured by Claude state like the tabs.
+Type to filter, `enter` switches to the highlighted session or window, `esc`
+cancels. The bottom half previews the highlighted pane.
+
+It needs [fzf](https://github.com/junegunn/fzf) (`apt install fzf`). Without
+it, `prefix s` opens tmux's own picker instead, which is always on `prefix S`
+(and `prefix w` for windows) and shows the tags before each session's window
+count. To go back to tmux's picker on `prefix s` for good, replace the
+`bind s if-shell ...` block in `tmuxconf` with
+```
+bind s choose-tree -Zs -F "#{E:@tree_format}"
+```
+
 ## Claude Code window tabs
 Claude Code reports its state through hooks that call `claude_hook.sh`, which
 sets a `@claude_waiting` option on the tmux pane Claude is running in, and
