@@ -12,7 +12,8 @@
 #   working started a turn
 #   input   blocked on a question or permission prompt
 #   done    finished its turn and you haven't looked yet; skipped when the
-#           window is already on screen
+#           window is already on screen. Also records how many background
+#           subagents are still running, from the Stop hook's input on stdin
 #   resume  working again after a prompt, turns input back into working but
 #           leaves done alone
 #   idle    sitting at the prompt, clears working in case the turn was
@@ -27,6 +28,10 @@
 #
 # @claude_done_at holds when Claude last finished a turn, even after you've
 # seen it, so unread can restore the original timer.
+#
+# @claude_bg holds how many background subagents were still running when
+# Claude last finished a turn; it is unset when there are none and whenever a
+# new turn starts. Claude wakes itself when they finish, which starts a turn.
 
 # set_state <pane> <state>, keeping @claude_since if the state isn't changing
 set_state() {
@@ -34,6 +39,15 @@ set_state() {
     tmux set-option -p -t "$1" @claude_since "$(date +%s)"
   fi
   tmux set-option -p -t "$1" @claude_waiting "$2"
+}
+
+# set_bg <pane> <count>, unset unless count is a positive number
+set_bg() {
+  if [[ "$2" =~ ^[1-9][0-9]*$ ]]; then
+    tmux set-option -p -t "$1" @claude_bg "$2"
+  else
+    tmux set-option -p -u -t "$1" @claude_bg
+  fi
 }
 
 clear_state() {
@@ -57,6 +71,7 @@ clear_state() {
     done)
       [[ -n "$TMUX_PANE" ]] || exit 0
       tmux set-option -p -t "$TMUX_PANE" @claude_done_at "$(date +%s)"
+      set_bg "$TMUX_PANE" "$(jq '[.background_tasks[]? | select(.type == "subagent" and .status == "running")] | length')"
       if [[ "$(tmux display-message -p -t "$TMUX_PANE" '#{&&:#{window_active},#{session_attached}}')" == 1 ]]; then
         clear_state "$TMUX_PANE"
       else
@@ -67,6 +82,7 @@ clear_state() {
       [[ -n "$TMUX_PANE" ]] || exit 0
       set_state "$TMUX_PANE" working
       tmux set-option -p -u -t "$TMUX_PANE" @claude_done_at
+      set_bg "$TMUX_PANE"
       ;;
     resume)
       [[ -n "$TMUX_PANE" ]] || exit 0
@@ -94,6 +110,7 @@ clear_state() {
       [[ -n "$TMUX_PANE" ]] || exit 0
       clear_state "$TMUX_PANE"
       tmux set-option -p -u -t "$TMUX_PANE" @claude_done_at
+      set_bg "$TMUX_PANE"
       ;;
   esac
 

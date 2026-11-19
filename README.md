@@ -89,6 +89,13 @@ while one is working, followed by how long it has been that way
 (`1:api… 4m`). Switching to a window marks it seen, and a Claude that finishes
 in the window you're already on doesn't mark it at all.
 
+When Claude finishes its turn with background subagents still running, the
+tab shows how many after the name (`1:api +2 4m`). Claude wakes itself when
+they finish, which turns it back into a `…`. The count comes from the
+`background_tasks` list in the `Stop` hook's input, so it needs `jq`.
+Background shell commands aren't counted, since a dev server would keep the
+count up for as long as it runs.
+
 `prefix u` marks the current pane unread again, so its tab goes yellow once you
 switch away. The timer picks up from when Claude finished rather than
 restarting; if Claude hasn't finished since your last prompt, or the pane
