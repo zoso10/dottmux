@@ -29,7 +29,7 @@ unbind -T copy-mode-vi Enter
 bind-key -T copy-mode-vi Enter send -X copy-pipe-and-cancel "xclip -in -selection clipboard"
 
 # Up update frequency
-set -g status-interval 5
+set -g status-interval 1
 
 # Theming
 set -g status-style "bg=#103640"
@@ -91,3 +91,6 @@ bind X confirm-before -p "finish task (remove worktree, close window)? (y/n)" "r
 bind -n C-s setw synchronize-panes
 
 set -g focus-events on
+
+set -g default-terminal "tmux-256color"
+set -g terminal-overrides ",xterm-256color:Tc"
